@@ -51,20 +51,31 @@ void ArquivosClass::initArray(char* buffer, uint16_t size)
 
 long ArquivosClass::leituraNumero(const char* arqv, bool incrementar){
 	File arquivo = SD.open(arqv, FILE_READ);
-	String nsrString = arquivo.readString();
+	
+	char buffer[10];
+
+	int tamanho = arquivo.available();
+	buffer[tamanho] = FIM_STRING;
+
+	for (int i = 0; i < tamanho; i++)
+		buffer[i] = arquivo.read();
+
 	arquivo.close();
 
+	long numero = atol(buffer);
+
 	if (incrementar == false)
-		return nsrString.toInt();
+		return numero;
 
 	SD.remove((char*) arqv);
 
-	long nsrNumber = nsrString.toInt() + 1;
+	numero += 1;
+
 	arquivo = SD.open(arqv, FILE_WRITE);
-	arquivo.print(nsrNumber);
+	arquivo.print(numero);
 	arquivo.close();
 
-	return nsrNumber;
+	return numero;
 }
 
 long ArquivosClass::leituraNSR(bool incrementar = true)
@@ -227,16 +238,20 @@ void ArquivosClass::alterarColaborador(char* pessoa){
 	fpessoa.close();
 }
 
-void ArquivosClass::incluirColaborador(char* pessoa){
+long ArquivosClass::incluirColaborador(char* pessoa){
 	File fpessoa = SD.open(mt_colaborador, FILE_WRITE);
 
-	fpessoa.print(leituraId());
+	long id = leituraId();
+
+	fpessoa.print(id);
 	fpessoa.print(';');
 	fpessoa.print(pessoa);
 	fpessoa.print('$');
 	fpessoa.close();
 
 	salvarHistoricoColaborador(pessoa, INCLUSAO);
+
+	return id;
 }
 
 bool ArquivosClass::proximoColaborador(File fpessoa, char* pessoa){

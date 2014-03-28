@@ -1,3 +1,4 @@
+#include "Pacote.h"
 #include "Arquivos.h"
 #include "Constants.h"
 #include <Wire.h>
@@ -22,7 +23,7 @@ void setup()
 {
 	pinMode(53, OUTPUT);
 	
-	Ethernet.begin(mac);
+	Ethernet.begin(mac, IPAddress(10,1,1,14));
 
 	SD.begin(4);
 
@@ -53,42 +54,29 @@ void loop()
 		{
 			/* leitura do pacote */
 
-			char buffer[BUFFER_SIZE];
+			Pacote pacote;
 
-			char tamanhoPacote = cliente.read();
-			char tipoPacote = cliente.read();
+			pacote.receber(&cliente);
 
-			buffer[tamanhoPacote] = END_STRING;
-
-			for (int i = 0; i < tamanhoPacote; i++){
-				buffer[i] = cliente.read();
-			}
-
-			/* decisao do pacote */
-
-			switch (tipoPacote)
+			switch (pacote.tipoPacote)
 			{
 			case CADASTRAR_COLABORADOR: {
 
-				Arquivos.incluirColaborador(buffer);
+				long id = Arquivos.incluirColaborador(pacote.buffer);
+
+				pacote = Pacote(COLABORADOR_CADASTRADO, (char) id);
+
+				pacote.enviar(&cliente);
 
 				break; 
 			}
 			case CONSULTAR_COLABORADOR: {
-
-				char* pessoa;
-				int id = buffer[0];
-
-				Arquivos.consultarColaborador(pessoa, id); //TODO: bitwise manolo
-
-				cliente.print(COLABORADOR_CONSULTADO);
-				cliente.print(pessoa);
-
+				
 				break;
 			}
 			case ALTERAR_COLABORADOR: {
 
-				Arquivos.alterarColaborador(buffer);
+				
 
 				break;
 			}

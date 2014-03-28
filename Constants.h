@@ -3,7 +3,7 @@
 #ifndef _CONSTANTSCLASS_h
 #define _CONSTANTSCLASS_h
 
-#define END_STRING				'\0'
+#define FIM_STRING				'\0'
 #define SEPARADOR				';'
 #define SEPARADOR_GERAL			'$'
 
@@ -22,6 +22,7 @@
 #define	EXCLUIR_COLABORADOR		0x04
 
 #define COLABORADOR_CONSULTADO	0xF0
+#define COLABORADOR_CADASTRADO	0xEF
 
 // Empregador
 #define CADASTRAR_EMPREGADOR	0x05

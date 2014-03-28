@@ -29,7 +29,7 @@ public:
 	String leituraEmpregador();
 	void incluirEmpregador(String);
 	void alterarEmpregador(String);
-	void incluirColaborador(char*);
+	long incluirColaborador(char*);
 	void alterarColaborador(char*);
 	void excluirColaborador(char*);
 	bool proximoColaborador(File, char*);

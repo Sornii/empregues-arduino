@@ -73,10 +73,12 @@
   <ItemGroup>
     <ClInclude Include="Arquivos.h" />
     <ClInclude Include="Constants.h" />
+    <ClInclude Include="Pacote.h" />
     <ClInclude Include="Visual Micro\.Empregues.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Arquivos.cpp" />
+    <ClCompile Include="Pacote.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
