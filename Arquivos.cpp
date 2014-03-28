@@ -1,10 +1,16 @@
-// 
-// 
-// 
-
 #include "Arquivos.h"
 #include "SD.h"
-#include "aJSON.h"
+#include "Constants.h"
+
+// O arquivo NSR.TXT servirá para guardar e servir o
+// número sequencial de registro, para cada operação na
+// "memória de registro principal" ou "memória de
+// registro de ponto".
+
+// O arquivo ID.TXT servirá para guardar e servir o
+// número de identificação dos empregados para o
+// controle do banco de dados.
+
 
 const char idp[] = "ID.TXT";
 const char nsr[] = "NSR.TXT";
@@ -16,19 +22,42 @@ const char mrp_marcacaoPonto[] = "MRP_MPT.TXT";
 const char mt_colaborador[] = "MT_COL.TXT";
 const char mt_empregador[] = "MT_EMP.TXT";
 
-const char* arq[] = { idp, nsr, mrp_ajusteRelogio, mrp_historicoEmpregador,
+const char* arq[] = 
+{
+	idp, nsr, mrp_ajusteRelogio, mrp_historicoEmpregador,
 	mrp_historicoColaborador, mrp_marcacaoPonto,
-	mt_colaborador, mt_empregador };
+	mt_colaborador, mt_empregador 
+};
+
+#pragma region Private Methods
+
+void ArquivosClass::initArray(char* buffer)
+{
+	initArray(buffer, 256);
+}
+
+void ArquivosClass::initArray(char* buffer, uint16_t size)
+{
+	for (int i = 0; i < size; i++) buffer[i] = '\0';
+}
+
+// Com o arquivo NSR.TXT separado do restante, é feito a
+// sua leitura para gerar os números sequenciais de
+// registro que são usadas para armazenadar qualquer
+// operação realizada no ERP.
+
+// Assim como o arquivo ID.TXT também é separado e feito
+// a sua leitura para gerar números de identificação
 
 long ArquivosClass::leituraNumero(const char* arqv, bool incrementar){
 	File arquivo = SD.open(arqv, FILE_READ);
 	String nsrString = arquivo.readString();
 	arquivo.close();
 
-	if(incrementar == false)
+	if (incrementar == false)
 		return nsrString.toInt();
 
-	SD.remove((char*)arqv);
+	SD.remove((char*) arqv);
 
 	long nsrNumber = nsrString.toInt() + 1;
 	arquivo = SD.open(arqv, FILE_WRITE);
@@ -48,75 +77,220 @@ long ArquivosClass::leituraId(bool incrementar = true)
 	return leituraNumero(idp, incrementar);
 }
 
+// O circuito responsável por guardar a dada é chamado de
+// RTC (Real-time-clock), e é deste camarada que é feito
+// a recuperação da data e hora a qualquer momento para
+// auxiliar no conhecimento do tempo no exato momento
+// da gravação de dados que necessitam de data e hora.
 
-void ArquivosClass::init()
+// Nesta função é feito a recuperação da data.
+
+String ArquivosClass::getData()
 {
-	for(int i = 0; i < QUANTIDADE_ARQUIVO; i++)
+	return "11/02/2014";
+}
+
+// Nesta função é feito a recuperação da hora.
+
+String ArquivosClass::getHora()
+{
+	return "15:57";
+}
+
+void ArquivosClass::gravarEmpregador(String empregador, char metodo)
+{
+	String historico = String("");
+
+	if (SD.exists((char*) mt_empregador)){
+		SD.remove((char*) mt_empregador);
+	}
+
+	File arquivo = SD.open(mt_empregador, FILE_WRITE);
+	arquivo.print(empregador);
+	arquivo.close();
+
+	arquivo = SD.open(mrp_historicoEmpregador, FILE_WRITE);
+
+	historico += leituraNSR(false);
+	historico += ';' + getData();
+	historico += ';' + getHora();
+	historico += ';' + metodo;
+	historico += ';' + empregador;
+
+	arquivo.print(historico);
+	arquivo.print('$');
+
+	arquivo.close();
+}
+
+void ArquivosClass::salvarHistoricoColaborador(char* pessoa, char operacao)
+{
+	File file = SD.open(mrp_historicoColaborador, FILE_WRITE);
+
+	file.print(leituraNSR());
+	file.print(SEPARADOR);
+	file.print(getData());
+	file.print(SEPARADOR);
+	file.print(getHora());
+	file.print(SEPARADOR);
+	file.print(operacao);
+	file.print(SEPARADOR);
+	file.print(pessoa);
+	file.print(SEPARADOR_GERAL);
+
+	file.close();
+}
+
+#pragma endregion
+
+#pragma region Public Methods
+
+// Inicializacao dos arquivos
+int ArquivosClass::init()
+{
+	for (int i = 0; i < QUANTIDADE_ARQUIVO; i++)
 	{
-		SD.remove((char*)arq[i]);
+		SD.remove((char*) arq[i]);
 		File _thisFile = SD.open(arq[i]);
-		if(arq[i] == "NSR.TXT" || arq[i] == "ID.TXT") {
-
-			aJsonObject* root = aJson.createObject();
-			aJson.addItemToObject(root, "Valor", 0);
-
-			_thisFile.print(aJson.print(root));
-
-			aJson.deleteItem(root);
-		}
+		if (arq[i] == "NSR.TXT" || arq[i] == "ID.TXT")
+			_thisFile.print("0");
 		_thisFile.close();
 	}
 }
 
-void ArquivosClass::incluirColaborador(aJsonObject* colaborador) {
+String ArquivosClass::leituraEmpregador()
+{
+	char* buff;
+	File arquivo = SD.open(mt_empregador, FILE_READ);
+	int empSize = arquivo.available();
+
+	buff = new char[empSize + 1];
+
+	for (int i = 0; arquivo.available() > 0; i++)
+		buff[i] = arquivo.read();
+
+	buff[empSize] = '\0';
+
+	arquivo.close();
+	String empregador = String(buff);
+
+	return buff;
+}
+
+void ArquivosClass::incluirEmpregador(String empregador)
+{
+	gravarEmpregador(empregador, INCLUSAO);
+}
+
+void ArquivosClass::alterarEmpregador(String empregador)
+{
+	gravarEmpregador(empregador, ALTERACAO);
+}
+
+void ArquivosClass::alterarColaborador(char* pessoa){
 	File fpessoa = SD.open(mt_colaborador, FILE_WRITE);
-	aJsonObject* id = aJson.getObjectItem(colaborador, "Id");
-	id->valueint = leituraId();
-	fpessoa.print(aJson.print(colaborador));
+
+	int _id = 0;
+	int idAux = 0;
+	char* pch = strtok(pessoa, ";");
+	char nAux[20];
+	_id = atoi(pch);
+	int lastPos = 0;
+	bool existe = true;
+
+	while (idAux != _id){
+		initArray(nAux);
+
+		lastPos = fpessoa.position();
+
+		if (fpessoa.readBytesUntil(';', nAux, 20) <= 0) {
+			existe = false;
+			break;
+		}
+
+		if (nAux[0] != '!')
+			idAux = atoi(nAux);
+
+		if (idAux != _id) fpessoa.find("$");
+	}
+
+	if (existe){
+		fpessoa.seek(lastPos);
+		fpessoa.print('!');
+		fpessoa.seek(fpessoa.size());
+		fpessoa.print(pessoa);
+		fpessoa.print('$');
+
+		salvarHistoricoColaborador(pessoa, ALTERACAO);
+	}
+
+	fpessoa.close();
+}
+
+void ArquivosClass::incluirColaborador(char* pessoa){
+	File fpessoa = SD.open(mt_colaborador, FILE_WRITE);
+
+	fpessoa.print(leituraId());
+	fpessoa.print(';');
+	fpessoa.print(pessoa);
 	fpessoa.print('$');
 	fpessoa.close();
+
+	salvarHistoricoColaborador(pessoa, INCLUSAO);
 }
 
-aJsonObject* ArquivosClass::leituraColaborador(int id) {
+bool ArquivosClass::proximoColaborador(File fpessoa, char* pessoa){
+	char buffer[256];
+	initArray(buffer);
+	if (fpessoa.readBytesUntil('$', buffer, 256) <= 0) return false;
+	if (buffer[0] == '!'){
+		initArray(buffer);
+		fpessoa.readBytesUntil('$', buffer, 256);
+	}
+	strcpy(pessoa, buffer);
+	return true;
+}
+
+bool ArquivosClass::consultarColaborador(char* pessoa, int id){
 	File fpessoa = SD.open(mt_colaborador, FILE_READ);
-	
-	while(true){
-		String pessoa = fpessoa.readStringUntil('$');
 
-		if (pessoa.length() == 0)
-			break;
+	int _id = 0;
+	char bufferId[20];
 
-		char* buffer = new char[pessoa.length()];
-		pessoa.toCharArray(buffer, pessoa.length());
-		if(buffer[0] == '!') continue;
+	char buffer[256];
+	char aux[256];
 
-		aJsonObject* m = aJson.parse(buffer);
-		aJsonObject* idJson = aJson.getObjectItem(m, "Id");
-		if (idJson->valueint == id){
+	initArray(buffer);
+	initArray(aux);
+	initArray(pessoa);
+
+	while (_id != id)
+	{
+		initArray(bufferId, 20);
+		if (fpessoa.readBytesUntil(';', bufferId, 20) <= 0) {
 			fpessoa.close();
-			return m;
+			return false;
 		}
+
+		if (bufferId[0] != '!')
+			_id = atoi(bufferId);
+
+		if (_id != id) fpessoa.find("$");
 	}
 
+	fpessoa.readBytesUntil('$', aux, 256);
 	fpessoa.close();
 
-	return nullptr;
+	strcpy(buffer, bufferId);
+	strcat(buffer, ";");
+	strcat(buffer, aux);
+
+	strcpy(pessoa, buffer);
+
+	return true;
 }
 
-aJsonObject* ArquivosClass::leituraColaboradores(){
-	File fpessoa = SD.open(mt_colaborador, FILE_READ);
-	String pessoas = "[";
-
-	while(true){
-		
-	}
-
-	pessoas += "]";
-}
-
-void ArquivosClass::alterarColaborador(aJsonObject* colaborador) {
-}
-
+#pragma endregion
 
 
 ArquivosClass Arquivos;

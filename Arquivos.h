@@ -1,40 +1,45 @@
-// ArquivosClass.h
+// Arquivos.h
 
-#ifndef _ARQUIVOSCLASS_h
-#define _ARQUIVOSCLASS_h
+#ifndef _ARQUIVOS_h
+#define _ARQUIVOS_h
 
-#if defined(ARDUINO) && ARDUINO >= 100
-	#include "Arduino.h"
-#else
-	#include "WProgram.h"
-#endif
+#include "Arduino.h"
+#include "SD.h"
 
-#define QUANTIDADE_ARQUIVO	8
+#define QUANTIDADE_ARQUIVO 8
+
+#define INCLUSAO '1'
+#define ALTERACAO '2'
+#define EXCLUSAO '3'
 
 class ArquivosClass
 {
 private:
-	
-
-public:
+	void initArray(char*);
+	void initArray(char*, uint16_t);
 	long leituraNumero(const char*, bool);
 	long leituraNSR(bool);
 	long leituraId(bool);
-
-
-	void init();
-
-	void incluirColaborador(aJsonObject*);
-	void alterarColaborador(aJsonObject*);
-	aJsonObject* ArquivosClass::leituraColaborador(int);
-	aJsonObject* ArquivosClass::leituraColaboradores()
+	String getHora();
+	String getData();
+	void gravarEmpregador(String, char);
+	void salvarHistoricoColaborador(char*, char);
+public:
+	int init();
+	String leituraEmpregador();
+	void incluirEmpregador(String);
+	void alterarEmpregador(String);
+	void incluirColaborador(char*);
+	void alterarColaborador(char*);
+	void excluirColaborador(char*);
+	bool proximoColaborador(File, char*);
+	bool consultarColaborador(char*, int);
 };
 
 extern ArquivosClass Arquivos;
 
 extern const char idp[];
 extern const char nsr[];
-
 extern const char mrp_ajusteRelogio[];
 extern const char mrp_historicoEmpregador[];
 extern const char mrp_historicoColaborador[];
@@ -43,4 +48,3 @@ extern const char mt_colaborador[];
 extern const char mt_empregador[];
 
 #endif
-
