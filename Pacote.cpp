@@ -1,31 +1,22 @@
-// 
-// 
-// 
-
 #include "Pacote.h"
 
 void Pacote::receber(EthernetClient* cliente)
 {
-	tamanhoPacote = cliente->read();
-	tipoPacote = cliente->read();
+	tamanho = cliente->read();
+	tipo = cliente->read();
 
-	buffer[tamanhoPacote] = FIM_STRING;
+	cliente->read(buffer, tamanho);
 
-	for (int i = 0; i < tamanhoPacote; i++)
-		buffer[i] = cliente->read();
+	buffer[tamanho] = 0;
 }
 
 void Pacote::enviar(EthernetClient* cliente)
 {
-	cliente->write(tamanhoPacote);
-	cliente->write(tipoPacote);
+	for (uint8_t i = tamanho; i > 0; i--)
+		buffer[i + 1] = buffer[i - 1];
 
-	int tam = strlen(buffer);
+	buffer[0] = tamanho;
+	buffer[1] = tipo;
 
-	for (int i = 0; i < tam; i++)
-		cliente->write(buffer[i]);
-}
-
-Pacote::Pacote(uint8_t tipoPacote, char* mensagem)
-{
+	cliente->write(buffer, tamanho + 2);
 }

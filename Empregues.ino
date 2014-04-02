@@ -62,9 +62,19 @@ void loop()
 			{
 			case CADASTRAR_COLABORADOR: {
 
+				uint8_t serl[4];
+				uint8_t* p = serl;
+
 				long id = Arquivos.incluirColaborador(pacote.buffer);
 
-				pacote = Pacote(COLABORADOR_CADASTRADO, (char) id);
+				for (int i = 0; i < 4; i++)
+					*(p + i) = (uint8_t) (id >> 8 * i);
+
+				pacote.tipoPacote = COLABORADOR_CADASTRADO;
+				pacote.tamanhoPacote = 4;
+
+				for (int i = 0; i < 4; i++)
+					pacote.buffer[i] = serl[i];
 
 				pacote.enviar(&cliente);
 
