@@ -12,8 +12,8 @@
 // controle do banco de dados.
 
 
-const char idp[] = "ID.TXT";
-const char nsr[] = "NSR.TXT";
+char idFile[] = "ID";
+char nsrFile[] = "NSR";
 
 const char mrp_ajusteRelogio[] = "MRP_AREL.TXT";
 const char mrp_historicoEmpregador[] = "MRP_EMP.TXT";
@@ -24,7 +24,7 @@ const char mt_empregador[] = "MT_EMP.TXT";
 
 const char* arq[] = 
 {
-	idp, nsr, mrp_ajusteRelogio, mrp_historicoEmpregador,
+	mrp_ajusteRelogio, mrp_historicoEmpregador,
 	mrp_historicoColaborador, mrp_marcacaoPonto,
 	mt_colaborador, mt_empregador 
 };
@@ -49,43 +49,60 @@ void ArquivosClass::initArray(char* buffer, uint16_t size)
 // Assim como o arquivo ID.TXT também é separado e feito
 // a sua leitura para gerar números de identificação
 
-long ArquivosClass::leituraNumero(const char* arqv, bool incrementar){
-	File arquivo = SD.open(arqv, FILE_READ);
+void ArquivosClass::getNsr()
+{
+	char buffer[20];
+
+	File file = SD.open(nsrFile, FILE_READ);
+	uint8_t tamanho = file.available();
 	
-	char buffer[10];
+	file.read(buffer, tamanho);
+	file.close();
 
-	int tamanho = arquivo.available();
-	buffer[tamanho] = FIM_STRING;
-
-	for (int i = 0; i < tamanho; i++)
-		buffer[i] = arquivo.read();
-
-	arquivo.close();
-
-	long numero = atol(buffer);
-
-	if (incrementar == false)
-		return numero;
-
-	SD.remove((char*) arqv);
-
-	numero += 1;
-
-	arquivo = SD.open(arqv, FILE_WRITE);
-	arquivo.print(numero);
-	arquivo.close();
-
-	return numero;
+	nsr = atol(buffer);
 }
 
-long ArquivosClass::leituraNSR(bool incrementar = true)
+void ArquivosClass::setNsr()
 {
-	return leituraNumero(nsr, incrementar);
+	SD.remove(nsrFile);
+
+	File file = SD.open(nsrFile, FILE_WRITE);
+	file.print(nsr);
+	file.close();
 }
 
-long ArquivosClass::leituraId(bool incrementar = true)
+void ArquivosClass::getId()
 {
-	return leituraNumero(idp, incrementar);
+	char buffer[20];
+
+	File file = SD.open(idFile, FILE_READ);
+	uint8_t tamanho = file.available();
+
+	file.read(buffer, tamanho);
+	file.close();
+
+	id = atol(buffer);
+}
+
+void ArquivosClass::setId()
+{
+	SD.remove(idFile);
+
+	File file = SD.open(idFile, FILE_WRITE);
+	file.print(id);
+	file.close();
+}
+
+void ArquivosClass::incrementId()
+{
+	id += 1;
+	setId();
+}
+
+void ArquivosClass::incrementNsr()
+{
+	nsr += 1;
+	setNsr();
 }
 
 // O circuito responsável por guardar a dada é chamado de
@@ -95,7 +112,7 @@ long ArquivosClass::leituraId(bool incrementar = true)
 // da gravação de dados que necessitam de data e hora.
 
 // Nesta função é feito a recuperação da data.
-
+/*
 String ArquivosClass::getData()
 {
 	return "11/02/2014";
@@ -134,6 +151,8 @@ void ArquivosClass::gravarEmpregador(String empregador, char metodo)
 	arquivo.close();
 }
 
+
+
 void ArquivosClass::salvarHistoricoColaborador(char* pessoa, char operacao)
 {
 	File file = SD.open(mrp_historicoColaborador, FILE_WRITE);
@@ -152,6 +171,8 @@ void ArquivosClass::salvarHistoricoColaborador(char* pessoa, char operacao)
 	file.close();
 }
 
+*/
+
 #pragma endregion
 
 #pragma region Public Methods
@@ -159,6 +180,7 @@ void ArquivosClass::salvarHistoricoColaborador(char* pessoa, char operacao)
 // Inicializacao dos arquivos
 int ArquivosClass::init()
 {
+	/*
 	for (int i = 0; i < QUANTIDADE_ARQUIVO; i++)
 	{
 		SD.remove((char*) arq[i]);
@@ -167,7 +189,39 @@ int ArquivosClass::init()
 			_thisFile.print("0");
 		_thisFile.close();
 	}
+	*/
+
+	nsr = 0;
+	id = 0;
+
+	SD.remove(nsrFile);
+	SD.remove(idFile);
+
+	File file = SD.open(nsrFile);
+	file.print("0");
+	file.close();
+
+	file = SD.open(idFile);
+	file.print("1");
+	file.close();
+
+	SD.remove("1");
+	SD.remove("2");
+	SD.remove("3");
+	SD.remove("4");
+	SD.remove("5");
+	SD.remove("6");
+	SD.remove("7");
+	SD.remove("8");
+	SD.remove("9");
 }
+
+uint32_t ArquivosClass::Id()
+{
+	return id;
+}
+
+/*
 
 String ArquivosClass::leituraEmpregador()
 {
@@ -197,6 +251,7 @@ void ArquivosClass::alterarEmpregador(String empregador)
 {
 	gravarEmpregador(empregador, ALTERACAO);
 }
+
 
 void ArquivosClass::alterarColaborador(char* pessoa){
 	File fpessoa = SD.open(mt_colaborador, FILE_WRITE);
@@ -238,22 +293,44 @@ void ArquivosClass::alterarColaborador(char* pessoa){
 	fpessoa.close();
 }
 
-long ArquivosClass::incluirColaborador(char* pessoa){
-	File fpessoa = SD.open(mt_colaborador, FILE_WRITE);
+*/
 
-	long id = leituraId();
+uint32_t ArquivosClass::incluirColaborador(char* pessoa){
+	char path[8];
 
-	fpessoa.print(id);
-	fpessoa.print(';');
-	fpessoa.print(pessoa);
-	fpessoa.print('$');
-	fpessoa.close();
+	incrementId();
+	ltoa(id, path, 16);
 
-	salvarHistoricoColaborador(pessoa, INCLUSAO);
+	File file = SD.open(path, FILE_WRITE);
+
+	file.print(pessoa);
+	file.close();
 
 	return id;
 }
 
+bool ArquivosClass::consultarColaborador(char* out, uint32_t thisid)
+{
+	char path[8];
+
+	ltoa(thisid, path, 16);
+
+	if (SD.exists(path))
+	{
+		File file = SD.open(path, FILE_READ);
+		uint8_t tamanho = file.available();
+		file.read(out, tamanho);
+		file.close();
+
+		out[tamanho] = 0;
+
+		return true;
+	}
+
+	return false;
+}
+
+/*
 bool ArquivosClass::proximoColaborador(File fpessoa, char* pessoa){
 	char buffer[256];
 	initArray(buffer);
@@ -304,6 +381,8 @@ bool ArquivosClass::consultarColaborador(char* pessoa, int id){
 
 	return true;
 }
+*/
+
 
 #pragma endregion
 

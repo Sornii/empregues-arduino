@@ -17,6 +17,7 @@ private:
 public:
 	void receber(EthernetClient*);
 	void enviar(EthernetClient*);
+	void insertBefore(char*);
 
 	byte tipo;
 	byte tamanho;

@@ -28,10 +28,13 @@ void setup()
 	SD.begin(4);
 
 	Arquivos.init();
+
+	Serial.println(Ethernet.localIP());
 }
 
 void loop()
 {
+	/*
 	int packetSize = Udp.parsePacket();
 	if(packetSize)
 	{
@@ -46,6 +49,7 @@ void loop()
 
 		Udp.endPacket();
 	}
+	*/
 
 	EthernetClient cliente = server.available();
 	if (cliente)
@@ -58,31 +62,76 @@ void loop()
 
 			pacote.receber(&cliente);
 
-			switch (pacote.tipoPacote)
+			switch (pacote.tipo)
 			{
 			case CADASTRAR_COLABORADOR: {
 
-				uint8_t serl[4];
-				uint8_t* p = serl;
+				/*
+				
+				Cadastrado do colaborador 
+				
+				A informação deve vir obrigatoriamente da seguinte forma
 
-				long id = Arquivos.incluirColaborador(pacote.buffer);
+				PIS     |  NOME
+				38231283;Fulano da Silva
+				
+				*/
 
-				for (int i = 0; i < 4; i++)
-					*(p + i) = (uint8_t) (id >> 8 * i);
+				uint32_t idCadastrado = Arquivos.incluirColaborador((char*) pacote.buffer);
 
-				pacote.tipoPacote = COLABORADOR_CADASTRADO;
-				pacote.tamanhoPacote = 4;
+				/*
+				
+				Envia a resposta com o id cadastrado
+				
+				O valor será enviado da seguinte forma
 
-				for (int i = 0; i < 4; i++)
-					pacote.buffer[i] = serl[i];
+				ID
+				901823792
 
+				*/
+
+				ltoa(idCadastrado, (char*) pacote.buffer, 10);
+
+				pacote.tamanho = strlen((char*) pacote.buffer);
+				pacote.tipo = COLABORADOR_CADASTRADO;
+				
 				pacote.enviar(&cliente);
 
 				break; 
 			}
 			case CONSULTAR_COLABORADOR: {
+
+
 				
 				break;
+			}
+			case LISTAR_COLABORADORES: {
+
+				for (uint32_t i = 1; i <= Arquivos.Id(); i++)
+				{
+					bool achou = Arquivos.consultarColaborador((char*) pacote.buffer, i);
+
+					if (achou)
+					{
+						pacote.tamanho = strlen((char*) pacote.buffer);
+
+						char buffer[12];
+
+						ltoa(i, buffer, 10);
+						strcat(buffer, ";");
+
+						pacote.insertBefore(buffer);
+
+						pacote.tipo = COLABORADOR_LISTADO;
+
+						pacote.enviar(&cliente);
+					}
+				}
+
+				pacote.tipo = PACOTE_NULO;
+				pacote.tamanho = 1;
+
+				pacote.enviar(&cliente);
 			}
 			case ALTERAR_COLABORADOR: {
 

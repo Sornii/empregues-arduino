@@ -20,3 +20,19 @@ void Pacote::enviar(EthernetClient* cliente)
 
 	cliente->write(buffer, tamanho + 2);
 }
+
+void Pacote::insertBefore(char* toInsert)
+{
+	int strInsertLength = strlen(toInsert);
+	int strReceiveLength = strlen((char*) buffer);
+
+	for (int i = strReceiveLength; i >= 0; i--)
+	{
+		buffer[i + strInsertLength] = buffer[i];
+	}
+
+	for (int i = 0; i < strInsertLength; i++)
+	{
+		buffer[i] = toInsert[i];
+	}
+}
