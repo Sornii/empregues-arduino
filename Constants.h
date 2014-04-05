@@ -3,13 +3,42 @@
 #ifndef _CONSTANTSCLASS_h
 #define _CONSTANTSCLASS_h
 
+//#define SEM_APITO_POR_HOJE
+#define BUZZER_PIN				30
+#define DELAY_PAUSA				800
+#define DELAY_APITO				50
+
+/* SPI BUS */
+
+#define SCK 52
+#define MISO 50
+#define MOSI 51
+#define SS 40
+
+/* I2C BUS */
+
+#define RFID_ADDRESS			0x24
+#define RTC_ADDRESS				0x68
+#define LCD_ADDRESS				0x27
+
+/* LCD */
+
+#define BACKLIGHT_PIN			3
+
+/* RFID MODULE */
+
+#define IRQ						(2)
+#define RESET					(3)
+
+/* Comunicacao */
+
 #define FIM_STRING				'\0'
 #define SEPARADOR				';'
-#define SEPARADOR_GERAL			'$'
 
 /* Ethernet Shield. */
 #define SERVER_PORTA			55535
 #define SERVER_WEBPORTA			80
+#define FIX_OUTPUT				53
 
 /* Pacotes. */
 
@@ -23,6 +52,7 @@
 #define	EXCLUIR_COLABORADOR		0x04
 
 #define LISTAR_COLABORADORES	0x05
+#define DEFINIR_CARTAO_COLABO	0x06
 
 #define COLABORADOR_CONSULTADO	0xF0
 #define COLABORADOR_CADASTRADO	0xEF

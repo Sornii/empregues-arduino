@@ -12,8 +12,13 @@
 // controle do banco de dados.
 
 
-char idFile[] = "ID";
-char nsrFile[] = "NSR";
+char idFile [] = "ID";
+char nsrFile [] = "NSR";
+
+char pastaCol [] = "COLAB/";
+char pastaRfid [] = "RFID/";
+
+/*
 
 const char mrp_ajusteRelogio[] = "MRP_AREL.TXT";
 const char mrp_historicoEmpregador[] = "MRP_EMP.TXT";
@@ -29,8 +34,11 @@ const char* arq[] =
 	mt_colaborador, mt_empregador 
 };
 
+*/
+
 #pragma region Private Methods
 
+/*
 void ArquivosClass::initArray(char* buffer)
 {
 	initArray(buffer, 256);
@@ -39,7 +47,7 @@ void ArquivosClass::initArray(char* buffer)
 void ArquivosClass::initArray(char* buffer, uint16_t size)
 {
 	for (int i = 0; i < size; i++) buffer[i] = '\0';
-}
+}*/
 
 // Com o arquivo NSR.TXT separado do restante, é feito a
 // sua leitura para gerar os números sequenciais de
@@ -205,15 +213,15 @@ int ArquivosClass::init()
 	file.print("1");
 	file.close();
 
-	SD.remove("1");
-	SD.remove("2");
-	SD.remove("3");
-	SD.remove("4");
-	SD.remove("5");
-	SD.remove("6");
-	SD.remove("7");
-	SD.remove("8");
-	SD.remove("9");
+	SD.remove("COLAB/1");
+	SD.remove("COLAB/2");
+	SD.remove("COLAB/3");
+	SD.remove("COLAB/4");
+	SD.remove("COLAB/5");
+	SD.remove("COLAB/6");
+	SD.remove("COLAB/7");
+	SD.remove("COLAB/8");
+	SD.remove("COLAB/9");
 }
 
 uint32_t ArquivosClass::Id()
@@ -296,12 +304,17 @@ void ArquivosClass::alterarColaborador(char* pessoa){
 */
 
 uint32_t ArquivosClass::incluirColaborador(char* pessoa){
-	char path[8];
+	char fullpath[30];
+	char path[10];
 
+	strcpy(fullpath, pastaCol);
+	
 	incrementId();
 	ltoa(id, path, 16);
 
-	File file = SD.open(path, FILE_WRITE);
+	strcat(fullpath, path);
+
+	File file = SD.open(fullpath, FILE_WRITE);
 
 	file.print(pessoa);
 	file.close();
@@ -311,13 +324,16 @@ uint32_t ArquivosClass::incluirColaborador(char* pessoa){
 
 bool ArquivosClass::consultarColaborador(char* out, uint32_t thisid)
 {
+	char fullpath[30];
 	char path[8];
 
+	strcpy(fullpath, pastaCol);
 	ltoa(thisid, path, 16);
+	strcat(fullpath, path);
 
-	if (SD.exists(path))
+	if (SD.exists(fullpath))
 	{
-		File file = SD.open(path, FILE_READ);
+		File file = SD.open(fullpath, FILE_READ);
 		uint8_t tamanho = file.available();
 		file.read(out, tamanho);
 		file.close();

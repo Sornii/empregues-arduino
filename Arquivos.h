@@ -15,6 +15,9 @@
 class ArquivosClass
 {
 private:
+
+	/*
+
 	void initArray(char*);
 	void initArray(char*, uint16_t);
 
@@ -23,6 +26,8 @@ private:
 
 	void gravarEmpregador(String, char);
 	void salvarHistoricoColaborador(char*, char);
+
+	*/
 
 	void getNsr();
 	void setNsr();
