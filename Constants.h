@@ -3,7 +3,9 @@
 #ifndef _CONSTANTSCLASS_h
 #define _CONSTANTSCLASS_h
 
-//#define SEM_APITO_POR_HOJE
+#define DEBUG Serial.println
+
+#define SEM_APITO_POR_HOJE
 #define BUZZER_PIN				30
 #define DELAY_PAUSA				800
 #define DELAY_APITO				50
@@ -13,7 +15,6 @@
 #define SCK 52
 #define MISO 50
 #define MOSI 51
-#define SS 40
 
 /* I2C BUS */
 
@@ -25,10 +26,10 @@
 
 #define BACKLIGHT_PIN			3
 
-/* RFID MODULE */
+/* NFC MODULE */
 
-#define IRQ						(2)
-#define RESET					(3)
+#define NFC_IRQ					(2)
+#define NFC_RESET				(3)
 
 /* Comunicacao */
 
@@ -53,6 +54,11 @@
 
 #define LISTAR_COLABORADORES	0x05
 #define DEFINIR_CARTAO_COLABO	0x06
+#define LISTAR_CARTOES			0x07
+#define CARTAO_CONSULTADO		0x08
+#define CARTAO_DEFINIDO			0x09
+#define LISTAR_PONTOS			0x10
+#define PONTO_LISTADO			0x11
 
 #define COLABORADOR_CONSULTADO	0xF0
 #define COLABORADOR_CADASTRADO	0xEF

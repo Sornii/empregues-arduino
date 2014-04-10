@@ -1,29 +1,29 @@
-#ifndef TWI_FREQ
 #define TWI_FREQ 400000L
-#endif
 
 #include <Wire.h>
+#include <SPI.h>
+
 #include <Adafruit_NFCShield_I2C.h>
 #include <LiquidCrystal_I2C.h>
-#include <LCD.h>
-#include <I2CIO.h>
-#include <FastIO.h>
+#include <RTClib.h>
+#include <Ethernet.h>
+#include <SD.h>
+
 #include "Pacote.h"
 #include "Arquivos.h"
 #include "Constants.h"
-#include <SPI.h>
-#include <SD.h>
 
-#include <RTClib.h>
-#include <Ethernet.h>
+uint32_t ultimoId = 0;
+uint32_t contadorUltimoId = 0;
 
-uint32_t lastmill;
+uint32_t contadorHora;
+uint32_t contadorMensagem;
 
-LiquidCrystal_I2C lcd(LCD_ADDRESS, BACKLIGHT_PIN, POSITIVE);
+LiquidCrystal_I2C lcd(LCD_ADDRESS, 2, 1, 0, 4, 5, 6, 7, BACKLIGHT_PIN, POSITIVE);
 
 RTC_DS1307 rtc;
 
-Adafruit_NFCShield_I2C nfc(IRQ, RESET);
+Adafruit_NFCShield_I2C nfc(NFC_IRQ, NFC_RESET);
 
 EthernetServer server(SERVER_PORTA);
 EthernetUDP Udp;
@@ -34,74 +34,63 @@ void setup()
 {
 	//pinMode(BUZZER_PIN, OUTPUT);
 
-	/* EthernetShield */
+	Serial.begin(9600);
 
 	// Quick fix
 	pinMode(FIX_OUTPUT, OUTPUT);
-	// Comeca em 10.1.1.14
-	Ethernet.begin(mac, IPAddress(10,1,1,14));
+
+	// Inicializa o servidor
+	Ethernet.begin(mac, IPAddress(10, 1, 1, 14));
 
 	// Inicializa o cartao SD
-	SD.begin(4);
+	if (!SD.begin(4))
+	{
+		Serial.println("SD nao iniciou");
+	}
 
-	// Inicializa a minha classe de Arquivos
-	Arquivos.init();
-
-	// Coloca na tela o IP, se mostrar diferente
-	// do posto acima, deu erro.
 	Serial.println(Ethernet.localIP());
-
-	/* I2C */
 
 	// Inicializa o TWI
 	Wire.begin();
 
 	lcd.begin(16, 2);
 	lcd.backlight();
-
-	lcd.print(Ethernet.localIP());
-
+	
 	// Inicializa o módulo RTC
 	rtc.begin();
-	rtc.adjust(DateTime(1396575600));
+	//rtc.adjust(DateTime(1396575600));
 
-	DateTime tempo = rtc.now();
-
-	lcd.home();
-
-	lcd.print(tempo.unixtime());
-
-	delay(3000);
+	lcd.print(rtc.now().unixtime());
 	
-
-	/* NFC/RFID */
-
+	// Inicializa o NFC modulo
 	nfc.begin();
-	uint32_t versiondata = nfc.getFirmwareVersion();
 	
-	if (!versiondata) {
-		Serial.print("Didn't find PN53x board");
-		while (1); // halt
+	if (!nfc.getFirmwareVersion()) {
+		Serial.print("PN532 nao iniciou");
 	}
 
 	nfc.setPassiveActivationRetries(0x02);
-	
 	nfc.SAMConfig();
-
 	
+	// Atualiza o millis
 
-	lastmill = millis();
+	contadorHora = millis();
+
+	// Inicializa a minha classe de Arquivos
+	Arquivos.init(&rtc);
 }
 
-
-
-void loop()
+void mostraHora()
 {
 	uint32_t mill = millis();
 
-	if (mill - lastmill > 1000)
+	if (mill - contadorHora > 1000)
 	{
+		contadorUltimoId++;
+
 		DateTime tempo = rtc.now();
+
+		Serial.println(tempo.unixtime());
 
 		lcd.home();
 		if (tempo.hour() < 10){
@@ -118,9 +107,58 @@ void loop()
 			lcd.print("0");
 		}
 		lcd.print(tempo.second());
-		lcd.print("        ");
-	}
+		lcdvazio(8);
 
+		contadorHora = mill;
+	}
+}
+
+void lcdvazio(uint8_t quantidade)
+{
+	for (int i = 0; i < quantidade; i++){
+		lcd.print(" ");
+	}
+}
+
+void limpaMensagem()
+{
+	uint32_t mill = millis();
+
+	if (mill - contadorMensagem > 5000)
+	{
+		lcd.setCursor(0, 1);
+		lcdvazio(16);
+
+		contadorMensagem = mill;
+	}
+}
+
+void uint8_cat(char* out, uint8_t in)
+{
+	char aux[5];
+	itoa(in, aux, 10);
+	strcat(out, aux);
+	strcat(out, "/");
+}
+
+void iatohexa(uint8_t* ia, char* out)
+{
+	//Inicializa a string
+	strcpy(out, "");
+
+	//Copia o conteudo convertendo-o para hex
+	for (uint8_t i = 0; i < 4; i++)
+	{
+		char aux[3];
+		itoa(ia[i], aux, 16);
+		strcat(out, aux);
+	}
+}
+
+void loop()
+{
+	mostraHora();
+	limpaMensagem();
 
 	/*
 	int packetSize = Udp.parsePacket();
@@ -138,6 +176,9 @@ void loop()
 		Udp.endPacket();
 	}
 	*/
+
+#pragma region Marca ponto
+
 	boolean success = false;
 	uint8_t uid [] = { 0, 0, 0, 0, 0, 0, 0 };
 	uint8_t uidLength;
@@ -146,81 +187,36 @@ void loop()
 
 	if (success)
 	{
-
-#ifndef SEM_APITO_POR_HOJE
-
-		digitalWrite(BUZZER_PIN, HIGH);
-		delay(DELAY_APITO);
-		digitalWrite(BUZZER_PIN, LOW);
-
-#endif
-
 		char fullpath[20] = "RFID/";
-		char path[9] = "";
+		char path[9];
 
-		for (uint8_t i = 0; i < 4; i++)
-		{
-			char aux[3];
-			itoa(uid[i], aux, 16);
-			strcat(path, aux);
-		}
-
+		iatohexa(uid, path);
 		strcat(fullpath, path);
 		
 		if (SD.exists(fullpath))
 		{
-			char buffer[256];
-			File file = SD.open(fullpath, FILE_READ);
-			uint8_t tamanho = file.available();
-			file.read(buffer, tamanho);
-			file.close();
-			buffer[tamanho] = 0;
+			char buffer[20];
 
-			lcd.setCursor(0, 1);
-			lcd.print(buffer);
+			getConteudo(fullpath, buffer);
 
-#ifndef SEM_APITO_POR_HOJE
-			digitalWrite(BUZZER_PIN, HIGH);
-			delay(50);
-			digitalWrite(BUZZER_PIN, LOW);
-#endif
-			delay(1000);
+			uint32_t idcolaborador = atol(buffer);
 
-			uint32_t idLido = atol(buffer);
-			ltoa(idLido, buffer, 16);
+			if (ultimoId != idcolaborador)
+			{
+				ultimoId = idcolaborador;
+								
+				Arquivos.marcarPonto(ultimoId);
+				
+				lcd.setCursor(0, 1);
+				lcd.print("Ponto marcado");
 
-			char colabpath[20] = "COLAB/";
-
-			strcat(colabpath, buffer);
-
-			file = SD.open(colabpath, FILE_READ);
-			tamanho = file.available();
-			file.read(buffer, tamanho);
-			file.close();
-			buffer[tamanho] = 0;
-
-			lcd.setCursor(0, 1);
-			lcd.print(buffer);
-			delay(1000);
-
-
+			}
 		}
-
-		lcd.clear();
-		lcd.print(path);
-		lcd.setCursor(0, 1);
-		lcd.print(fullpath);
-
-#ifndef SEM_APITO_POR_HOJE
-
-		delay(DELAY_PAUSA);
-		digitalWrite(BUZZER_PIN, HIGH);
-		delay(DELAY_APITO);
-		digitalWrite(BUZZER_PIN, LOW);
-
-#endif
-
 	}
+
+#pragma endregion
+
+#pragma region Comunicacao rede
 
 	EthernetClient cliente = server.available();
 	if (cliente)
@@ -235,6 +231,70 @@ void loop()
 
 			switch (pacote.tipo)
 			{
+			case LISTAR_PONTOS:
+			{
+				char fullpath[40] = "PONTO/";
+
+				strcat(fullpath, (char*) pacote.buffer);
+
+				//e.g. PONTO/2014/1
+
+				File dir = SD.open(fullpath);
+				File entry;
+
+				//envio e.g. idcolab;dia;hora;minuto
+
+				while (entry = dir.openNextFile())
+				{
+					char conteudo[30];
+
+					uint32_t idc = strtoul(entry.name(), NULL, 16);
+
+					ultoa(idc, (char*) pacote.buffer, 10);
+					strcat((char*) pacote.buffer, ";");
+
+					getConteudo(&entry, conteudo);
+
+					strcat((char*) pacote.buffer, conteudo);
+
+					pacote.tipo = PONTO_LISTADO;
+					pacote.tamanho = strlen((char*) pacote.buffer);
+					pacote.enviar(&cliente);
+				}
+
+				pacote.enviarNulo(&cliente);
+
+				break;
+			}
+			case LISTAR_CARTOES:
+			{
+				File file = SD.open("RFID/");
+
+				for (File entry = file.openNextFile(); entry; entry = file.openNextFile())
+				{
+					strcpy((char*) pacote.buffer, entry.name());
+
+					char read[20];
+
+					uint32_t tam = entry.available();
+					entry.read(read, tam);
+					entry.close();
+
+					read[tam] = 0;
+
+					strcat((char*) pacote.buffer, ";");
+					strcat((char*) pacote.buffer, read);
+
+					pacote.tamanho = strlen((char*) pacote.buffer);
+					pacote.tipo = CARTAO_CONSULTADO;
+
+					pacote.enviar(&cliente);
+				}
+
+				pacote.enviarNulo(&cliente);
+
+				break;
+			}
 			case ALTERAR_RELOGIO:
 			{
 				uint32_t unixtime = atol((char*) pacote.buffer);
@@ -248,7 +308,7 @@ void loop()
 				char fullpath[20] = "RFID/";
 				char path[9] = "";
 
-				nfc.setPassiveActivationRetries(0xAA);
+				nfc.setPassiveActivationRetries(0xFA);
 
 				success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
 				if (success)
@@ -278,6 +338,11 @@ void loop()
 					}
 #endif
 				}
+
+				strcpy((char*) pacote.buffer, path);
+				pacote.tamanho = strlen(path);
+				pacote.tipo = CARTAO_DEFINIDO;
+				pacote.enviar(&cliente);
 
 				nfc.setPassiveActivationRetries(0x02);
 
@@ -328,7 +393,7 @@ void loop()
 			}
 			case LISTAR_COLABORADORES: {
 
-				for (uint32_t i = 1; i <= Arquivos.Id(); i++)
+				for (uint32_t i = 1; i <= Arquivos.getId(); i++)
 				{
 					bool achou = Arquivos.consultarColaborador((char*) pacote.buffer, i);
 
@@ -347,10 +412,7 @@ void loop()
 					}
 				}
 
-				pacote.tipo = PACOTE_NULO;
-				pacote.tamanho = 1;
-
-				pacote.enviar(&cliente);
+				pacote.enviarNulo(&cliente);
 
 				break;
 			}
@@ -373,4 +435,6 @@ void loop()
 			delay(10);
 		}
 	}
+
+#pragma endregion
 }

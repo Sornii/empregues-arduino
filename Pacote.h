@@ -8,6 +8,7 @@
 #endif
 
 #include <Ethernet.h>
+#include "Constants.h"
 
 class Pacote
 {
@@ -17,6 +18,8 @@ private:
 public:
 	void receber(EthernetClient*);
 	void enviar(EthernetClient*);
+	void enviarNulo(EthernetClient*);
+
 	void insertBefore(char*);
 
 	byte tipo;
