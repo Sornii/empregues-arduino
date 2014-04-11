@@ -106,12 +106,6 @@ void ArquivosClass::getMesAno(DateTime &d, char* out)
 	strcpy(out, caminho);
 }
 
-void ArquivosClass::pastaPonto(DateTime &now)
-{
-	char hookThis[30];
-	pastaPonto(now, hookThis);
-}
-
 void ArquivosClass::pastaPonto(DateTime &now, char* out)
 {
 	char caminhoTotal[20] = "PONTO/";
@@ -132,13 +126,13 @@ void ArquivosClass::pastaPonto(DateTime &now, char* out)
 	strcpy(out, caminhoTotal);
 }
 
-void getConteudo(char* path, char* out)
+void ArquivosClass::getConteudo(char* path, char* out)
 {
 	File file = SD.open(path, FILE_READ);
 	getConteudo(&file, out);
 }
 
-void getConteudo(File* file, char* out)
+void ArquivosClass::getConteudo(File* file, char* out)
 {
 	uint32_t tam = file->available();
 	file->read(out, tam);
@@ -169,15 +163,7 @@ void ArquivosClass::init(RTC_DS1307* rtc)
 	SD.remove(nsrFile);
 	SD.remove(idFile);
 
-	File file = SD.open(nsrFile);
-	file.print("0");
-	file.close();
-
-	file = SD.open(idFile);
-	file.print("1");
-	file.close();
-
-	file = SD.open("COLAB/");
+	File file = SD.open("COLAB/");
 
 	File entry;
 
@@ -211,21 +197,25 @@ uint32_t ArquivosClass::getId()
 
 void ArquivosClass::marcarPonto(uint32_t id)
 {
-	char caminhoPonto[40] = "PONTO/";
+	char caminhoPonto[40];
 	char aux[20];
 
 	//precisamos chegar na pasta de ponto atual
 	//primeiro vamos checar se ela existe, se nao, criaremos.
 	DateTime now = _rtc->now();
 
-	pastaPonto(now, aux);
+	pastaPonto(now, caminhoPonto);
 
-	//vamos adicionar o caminho recebido
-	strcat(caminhoPonto, aux);
+	if (SD.exists(caminhoPonto))
+	{
+		DEBUG("Criado");
+	}
 
 	//vamos agora adicionar o id do colaborador ao caminho
 	ultoa(id, aux, 16);
 	strcat(caminhoPonto, aux);
+
+	DEBUG(caminhoPonto);
 
 	//vamos abrir um arquivo com o id no colaborador
 	//e entao colocarmos o o ponto que sera no seguinte formato
@@ -242,6 +232,8 @@ void ArquivosClass::marcarPonto(uint32_t id)
 	addint(now.hour(), ponto);
 	strcat(ponto, ";");
 	addint(now.minute(), ponto);
+
+	DEBUG(ponto);
 
 	file.println(ponto);
 	file.close();

@@ -5,6 +5,7 @@
 
 #define DEBUG Serial.println
 
+
 #define SEM_APITO_POR_HOJE
 #define BUZZER_PIN				30
 #define DELAY_PAUSA				800

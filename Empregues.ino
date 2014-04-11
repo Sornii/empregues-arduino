@@ -45,10 +45,8 @@ void setup()
 	// Inicializa o cartao SD
 	if (!SD.begin(4))
 	{
-		Serial.println("SD nao iniciou");
+		DEBUG("SD nao iniciou");
 	}
-
-	Serial.println(Ethernet.localIP());
 
 	// Inicializa o TWI
 	Wire.begin();
@@ -58,26 +56,32 @@ void setup()
 	
 	// Inicializa o módulo RTC
 	rtc.begin();
-	//rtc.adjust(DateTime(1396575600));
-
-	lcd.print(rtc.now().unixtime());
 	
 	// Inicializa o NFC modulo
 	nfc.begin();
 	
 	if (!nfc.getFirmwareVersion()) {
-		Serial.print("PN532 nao iniciou");
+		DEBUG("PN532 nao iniciou");
 	}
 
 	nfc.setPassiveActivationRetries(0x02);
 	nfc.SAMConfig();
 	
+	// Inicializa a minha classe de Arquivos
+	Arquivos.init(&rtc);
+
+	// Debugging
+	DEBUG(Ethernet.localIP());
+
+	lcd.setCursor(0, 1);
+	lcd.print(Ethernet.localIP());
+
 	// Atualiza o millis
 
 	contadorHora = millis();
+	contadorMensagem = millis();
 
-	// Inicializa a minha classe de Arquivos
-	Arquivos.init(&rtc);
+	delay(1000);
 }
 
 void mostraHora()
@@ -86,7 +90,11 @@ void mostraHora()
 
 	if (mill - contadorHora > 1000)
 	{
-		contadorUltimoId++;
+		if (++contadorUltimoId == 10)
+		{
+			ultimoId = 0;
+			contadorUltimoId = 0;
+		}
 
 		DateTime tempo = rtc.now();
 
@@ -197,19 +205,23 @@ void loop()
 		{
 			char buffer[20];
 
-			getConteudo(fullpath, buffer);
+			Arquivos.getConteudo(fullpath, buffer);
 
 			uint32_t idcolaborador = atol(buffer);
 
 			if (ultimoId != idcolaborador)
 			{
-				ultimoId = idcolaborador;
-								
 				Arquivos.marcarPonto(ultimoId);
 				
 				lcd.setCursor(0, 1);
 				lcd.print("Ponto marcado");
 
+				//reset delay mensagem
+				contadorMensagem = millis();
+
+				//Delay do ultimoId
+				ultimoId = idcolaborador;
+				contadorUltimoId = 0;
 			}
 		}
 	}
@@ -246,20 +258,38 @@ void loop()
 
 				while (entry = dir.openNextFile())
 				{
-					char conteudo[30];
+					char base[10];
+					char aux[15];
 
 					uint32_t idc = strtoul(entry.name(), NULL, 16);
 
-					ultoa(idc, (char*) pacote.buffer, 10);
-					strcat((char*) pacote.buffer, ";");
+					ultoa(idc, base, 10);
+					strcat(base, ";");
 
-					getConteudo(&entry, conteudo);
+					char nextread = entry.read();
 
-					strcat((char*) pacote.buffer, conteudo);
+					while (entry.available())
+					{
+						for (int i = 0; nextread != '\n' && nextread != '\r' && entry.available(); i++, nextread = entry.read())
+						{
+							aux[i] = nextread;
+							aux[i + 1] = '\0';
+						}
 
-					pacote.tipo = PONTO_LISTADO;
-					pacote.tamanho = strlen((char*) pacote.buffer);
-					pacote.enviar(&cliente);
+						while (nextread == '\r' || nextread == '\n')
+						{
+							nextread = entry.read();
+						}
+
+						strcpy((char*) pacote.buffer, base);
+						strcat((char*) pacote.buffer, aux);
+
+						DEBUG((char*) pacote.buffer);
+
+						pacote.tipo = PONTO_LISTADO;
+						pacote.tamanho = strlen((char*) pacote.buffer);
+						pacote.enviar(&cliente);
+					}
 				}
 
 				pacote.enviarNulo(&cliente);
@@ -329,14 +359,6 @@ void loop()
 
 					file.print((char*) pacote.buffer);
 					file.close();
-#ifndef SEM_APITO_POR_HOJE
-					for (uint8_t i = 0; i < 3; i++)
-					{
-						digitalWrite(BUZZER_PIN, HIGH);
-						delay(50);
-						digitalWrite(BUZZER_PIN, LOW);
-					}
-#endif
 				}
 
 				strcpy((char*) pacote.buffer, path);
@@ -346,7 +368,7 @@ void loop()
 
 				nfc.setPassiveActivationRetries(0x02);
 
-				delay(1000); // TODO: AUMENTAR ISSO AQUI DEPOIS!!!!
+				delay(3000); // TODO: AUMENTAR ISSO AQUI DEPOIS!!!! OU FAZER O TRECO LOCO LA DO ULTIMO ID =)
 
 				break;
 			}

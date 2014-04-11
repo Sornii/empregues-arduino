@@ -27,7 +27,6 @@ private:
 	*/
 
 	void addint(int, char*);
-	void getConteudo(char*, char*);
 
 	/*
 		Counters
@@ -50,10 +49,14 @@ private:
 	void pastaPonto(DateTime&, char*);
 
 public:
+	
+	void init(RTC_DS1307*);
+
+	/*
+		Getters and Setters
+	*/
 
 	uint32_t getId();
-
-	void init(RTC_DS1307*);
 	
 	/*
 		Colaboradores
@@ -63,6 +66,13 @@ public:
 	bool consultarColaborador(char*, uint32_t);
 
 	void marcarPonto(uint32_t);
+
+	/* 
+		Public Helper
+	*/
+
+	void getConteudo(char*, char*);
+	void getConteudo(File*, char*);
 };
 
 extern ArquivosClass Arquivos;
