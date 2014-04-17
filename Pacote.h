@@ -7,7 +7,10 @@
 #include "WProgram.h"
 #endif
 
+// Necessário para EthernetClient
 #include <Ethernet.h>
+
+// Necessário para BUFFER_SIZE
 #include "Constants.h"
 
 class Pacote
@@ -16,15 +19,40 @@ private:
 
 
 public:
+	// Recebe um pacote conforme as regras do
+	// protocolo
+	//
+	// \cliente Cliente para receber o pacote
 	void receber(EthernetClient*);
+
+	// Envia o pacote conforme a atribuição
+	// dos valores do pacote em questão
+	//
+	// \cliente Cliente para enviar o pacote
 	void enviar(EthernetClient*);
+
+	// Envia um pacote nulo como sinalização
+	// de envio de vários pacotes
+	//
+	// \cliente Cliente para enviar o pacote nulo
 	void enviarNulo(EthernetClient*);
 
+	// Insere a cadeia de caracteres no começo
+	// do buffer
+	//
+	// \toInsert Cadeia de caracteres para ser
+	// inserida no buffer
 	void insertBefore(char*);
 
+	// Guarda o tipo do pacote
 	byte tipo;
+
+	// Define o tamanho do buffer a ser
+	// enviado/recebido
 	byte tamanho;
-	byte buffer[256];
+
+	// Guarda o buffer para ser enviado/recebido
+	byte buffer[BUFFER_SIZE];
 };
 
 #endif

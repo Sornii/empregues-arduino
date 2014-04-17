@@ -1,5 +1,6 @@
 #include "Pacote.h"
 
+
 void Pacote::receber(EthernetClient* cliente)
 {
 	tamanho = cliente->read();
@@ -9,6 +10,7 @@ void Pacote::receber(EthernetClient* cliente)
 
 	buffer[tamanho] = 0;
 }
+
 
 void Pacote::enviar(EthernetClient* cliente)
 {
@@ -20,6 +22,7 @@ void Pacote::enviar(EthernetClient* cliente)
 
 	cliente->write(buffer, tamanho + 2);
 }
+
 
 void Pacote::enviarNulo(EthernetClient* cliente)
 {
@@ -35,6 +38,8 @@ void Pacote::enviarNulo(EthernetClient* cliente)
 
 	cliente->write(buffer, tamanho + 2);
 }
+
+
 void Pacote::insertBefore(char* toInsert)
 {
 	int strInsertLength = strlen(toInsert);

@@ -30,9 +30,17 @@ EthernetUDP Udp;
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 
+void buzz(uint16_t tempo)
+{
+
+}
+
 void setup()
 {
 	//pinMode(BUZZER_PIN, OUTPUT);
+
+	pinMode(BUZZER_PIN, OUTPUT);
+	analogWrite(BUZZER_PIN, 200);
 
 	Serial.begin(9600);
 
@@ -80,6 +88,8 @@ void setup()
 
 	contadorHora = millis();
 	contadorMensagem = millis();
+
+	digitalWrite(BUZZER_PIN, LOW);
 
 	delay(1000);
 }
@@ -211,6 +221,7 @@ void loop()
 
 			if (ultimoId != idcolaborador)
 			{
+				ultimoId = idcolaborador;
 				Arquivos.marcarPonto(ultimoId);
 				
 				lcd.setCursor(0, 1);
@@ -220,7 +231,6 @@ void loop()
 				contadorMensagem = millis();
 
 				//Delay do ultimoId
-				ultimoId = idcolaborador;
 				contadorUltimoId = 0;
 			}
 		}

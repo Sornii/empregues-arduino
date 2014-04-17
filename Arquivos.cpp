@@ -2,11 +2,6 @@
 #include "SD.h"
 #include "Constants.h"
 
-// O arquivo NSR.TXT servirá para guardar e servir o
-// número sequencial de registro, para cada operação na
-// "memória de registro principal" ou "memória de
-// registro de ponto".
-
 // O arquivo ID.TXT servirá para guardar e servir o
 // número de identificação dos empregados para o
 // controle do banco de dados.
@@ -20,6 +15,7 @@ char pastaPonto [] = "PONTO/";
 
 #pragma region Private Methods
 
+/* Não usaremos mais NSR por causa do tipo de memória
 void ArquivosClass::getNsrFromFile()
 {
 	char buffer[20];
@@ -41,6 +37,13 @@ void ArquivosClass::setNsrInFile()
 	file.print(nsr);
 	file.close();
 }
+
+void ArquivosClass::incrementNsr()
+{
+nsr += 1;
+setNsrInFile();
+}
+*/
 
 void ArquivosClass::getIdFromFile()
 {
@@ -70,11 +73,7 @@ void ArquivosClass::incrementId()
 	setIdInFile();
 }
 
-void ArquivosClass::incrementNsr()
-{
-	nsr += 1;
-	setNsrInFile();
-}
+
 
 void ArquivosClass::addint(int i, char* c)
 {
@@ -150,18 +149,13 @@ void ArquivosClass::init(RTC_DS1307* rtc)
 {
 	_rtc = rtc;
 
-	nsr = 0;
+	//nsr = 0;
 	id = 0;
-
-	/*
-	if (SD.exists(idFile))
-	{
-		getIdFromFile();
-	}
-	*/
 
 	SD.remove(nsrFile);
 	SD.remove(idFile);
+	
+
 
 	File file = SD.open("COLAB/");
 
@@ -182,6 +176,18 @@ void ArquivosClass::init(RTC_DS1307* rtc)
 	while (entry = file.openNextFile())
 	{
 		char nome[20] = "RFID/";
+		strcat(nome, entry.name());
+		entry.close();
+		SD.remove(nome);
+	}
+
+	file.close();
+
+	file = SD.open("PONTO/2014/4/");
+
+	while (entry = file.openNextFile())
+	{
+		char nome[20] = "PONTO/2014/4/";
 		strcat(nome, entry.name());
 		entry.close();
 		SD.remove(nome);
