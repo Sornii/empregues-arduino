@@ -353,7 +353,6 @@ void loop()
 				success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
 				if (success)
 				{
-
 					for (uint8_t i = 0; i < 4; i++)
 					{
 						char aux[3];
@@ -363,7 +362,15 @@ void loop()
 
 					strcat(fullpath, path);
 
-					SD.remove(fullpath);
+					if (SD.exists(fullpath))
+					{
+						strcpy((char*) pacote.buffer, "0");
+						pacote.tamanho = 1;
+						pacote.enviar(&cliente);
+						break;
+
+						delay(3000);
+					}
 
 					File file = SD.open(fullpath, FILE_WRITE);
 
@@ -425,7 +432,7 @@ void loop()
 			}
 			case LISTAR_COLABORADORES: {
 
-				for (uint32_t i = 1; i <= Arquivos.getId(); i++)
+				for (uint32_t i = 1; i <= Arquivos.getIdColaborador(); i++)
 				{
 					bool achou = Arquivos.consultarColaborador((char*) pacote.buffer, i);
 

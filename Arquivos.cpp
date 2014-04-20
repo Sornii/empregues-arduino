@@ -7,7 +7,7 @@
 // controle do banco de dados.
 
 char idFile [] = "ID";
-char nsrFile [] = "NSR";
+char idPontoFile [] = "PONTO/ID";
 
 char pastaCol [] = "COLAB/";
 char pastaRfid [] = "RFID/";
@@ -45,7 +45,7 @@ setNsrInFile();
 }
 */
 
-void ArquivosClass::getIdFromFile()
+void ArquivosClass::getIdColaboradorFromFile()
 {
 	char buffer[20];
 
@@ -55,25 +55,51 @@ void ArquivosClass::getIdFromFile()
 	file.read(buffer, tamanho);
 	file.close();
 
-	id = atol(buffer);
+	idColaborador = atol(buffer);
 }
 
-void ArquivosClass::setIdInFile()
+void ArquivosClass::setIdColaboradorInFile()
 {
 	SD.remove(idFile);
 
 	File file = SD.open(idFile, FILE_WRITE);
-	file.print(id);
+	file.print(idColaborador);
 	file.close();
 }
 
-void ArquivosClass::incrementId()
+void ArquivosClass::incrementIdColaborador()
 {
-	id += 1;
-	setIdInFile();
+	idColaborador += 1;
+	setIdColaboradorInFile();
 }
 
+void ArquivosClass::getIdPontoFromFile()
+{
+	char buffer[20];
 
+	File file = SD.open(idFile, FILE_READ);
+	uint8_t tamanho = file.available();
+
+	file.read(buffer, tamanho);
+	file.close();
+
+	idPonto = atol(buffer);
+}
+
+void ArquivosClass::setIdPontoInFile()
+{
+	SD.remove(idFile);
+
+	File file = SD.open(idFile, FILE_WRITE);
+	file.print(idPonto);
+	file.close();
+}
+
+void ArquivosClass::incrementIdPonto()
+{
+	idPonto += 1;
+	setIdColaboradorInFile();
+}
 
 void ArquivosClass::addint(int i, char* c)
 {
@@ -149,16 +175,12 @@ void ArquivosClass::init(RTC_DS1307* rtc)
 {
 	_rtc = rtc;
 
-	//nsr = 0;
-	id = 0;
+	idColaborador = idPonto = 0;
 
-	SD.remove(nsrFile);
 	SD.remove(idFile);
+	SD.remove(idPontoFile);
 	
-
-
 	File file = SD.open("COLAB/");
-
 	File entry;
 
 	while (entry = file.openNextFile())
@@ -196,13 +218,20 @@ void ArquivosClass::init(RTC_DS1307* rtc)
 	file.close();
 }
 
-uint32_t ArquivosClass::getId()
+uint32_t ArquivosClass::getIdColaborador()
 {
-	return id;
+	return idColaborador;
+}
+
+uint32_t ArquivosClass::getIdPonto()
+{
+	return idPonto;
 }
 
 void ArquivosClass::marcarPonto(uint32_t id)
 {
+	incrementIdPonto();
+
 	char caminhoPonto[40];
 	char aux[20];
 
@@ -233,6 +262,8 @@ void ArquivosClass::marcarPonto(uint32_t id)
 
 	char ponto[10] = "";
 
+	addint(idPonto, ponto);
+	strcat(ponto, ";");
 	addint(now.day(), ponto);
 	strcat(ponto, ";");
 	addint(now.hour(), ponto);
@@ -253,8 +284,8 @@ uint32_t ArquivosClass::incluirColaborador(char* pessoa){
 
 	strcpy(fullpath, pastaCol);
 	
-	incrementId();
-	ltoa(id, path, 16);
+	incrementIdColaborador();
+	ltoa(idColaborador, path, 16);
 
 	strcat(fullpath, path);
 
@@ -263,7 +294,7 @@ uint32_t ArquivosClass::incluirColaborador(char* pessoa){
 	file.print(pessoa);
 	file.close();
 
-	return id;
+	return idColaborador;
 }
 
 bool ArquivosClass::consultarColaborador(char* out, uint32_t thisid)

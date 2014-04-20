@@ -18,7 +18,8 @@ private:
 	// cadastros e ao mesmo tempo marcar o último
 	// ID usado para não realizar leituras toda via
 	// que precisa-lo
-	uint32_t id;
+	uint32_t idColaborador;
+	uint32_t idPonto;
 
 	RTC_DS1307* _rtc;
 
@@ -40,15 +41,19 @@ private:
 
 	// Realiza a leitura do ID diretamente do arquivo
 	// gravado no SD para a memória
-	void getIdFromFile();
+	void getIdColaboradorFromFile();
 
 	// Realiza a gravação do ID em memória para
 	// o arquivo no SD
-	void setIdInFile();
+	void setIdColaboradorInFile();
 
 	// Realiza um incremento no ID de memória e após
 	// realiza a gravação do mesmo no arquivo SD
-	void incrementId();
+	void incrementIdColaborador();
+
+	void getIdPontoFromFile();
+	void setIdPontoInFile();
+	void incrementIdPonto();
 		
 	/*************************************************
 		Others
@@ -84,7 +89,8 @@ public:
 	***************************************************/
 
 	// Retorna o ID registrado na memória do sistema
-	uint32_t getId();
+	uint32_t getIdColaborador();
+	uint32_t getIdPonto();
 	
 	/**************************************************
 		Colaboradores
