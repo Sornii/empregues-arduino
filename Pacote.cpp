@@ -30,15 +30,17 @@ void Pacote::enviarNulo(EthernetClient* cliente)
 	tipo = PACOTE_NULO;
 	tamanho = 1;
 
-	for (uint8_t i = tamanho; i > 0; i--)
-		buffer[i + 1] = buffer[i - 1];
-
-	buffer[0] = tamanho;
-	buffer[1] = tipo;
-
-	cliente->write(buffer, tamanho + 2);
+	enviar(cliente);
 }
 
+void Pacote::enviar(EthernetClient* cliente, byte avisoTipo)
+{
+	buffer[0] = 'a';
+	tipo = avisoTipo;
+	tamanho = 1;
+
+	enviar(cliente);
+}
 
 void Pacote::insertBefore(char* toInsert)
 {

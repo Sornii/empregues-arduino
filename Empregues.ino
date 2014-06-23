@@ -1,5 +1,4 @@
 #define TWI_FREQ 400000L
-
 #include <Wire.h>
 #include <SPI.h>
 
@@ -37,10 +36,7 @@ void buzz(uint16_t tempo)
 
 void setup()
 {
-	//pinMode(BUZZER_PIN, OUTPUT);
-
-	pinMode(BUZZER_PIN, OUTPUT);
-	analogWrite(BUZZER_PIN, 200);
+	bool somethingWrong = false;
 
 	Serial.begin(9600);
 
@@ -48,12 +44,17 @@ void setup()
 	pinMode(FIX_OUTPUT, OUTPUT);
 
 	// Inicializa o servidor
-	Ethernet.begin(mac, IPAddress(10, 1, 1, 14));
+	if (DIRECTCONNECTION) {
+		Ethernet.begin(mac, IPADDRESS, DNSSERVER, GATEWAY, SUBNETMASK);
+	} else {
+		Ethernet.begin(mac, IPADDRESS);
+	}
 
 	// Inicializa o cartao SD
 	if (!SD.begin(4))
 	{
 		DEBUG("SD nao iniciou");
+		somethingWrong = true;
 	}
 
 	// Inicializa o TWI
@@ -70,6 +71,7 @@ void setup()
 	
 	if (!nfc.getFirmwareVersion()) {
 		DEBUG("PN532 nao iniciou");
+		somethingWrong = true;
 	}
 
 	nfc.setPassiveActivationRetries(0x02);
@@ -89,9 +91,14 @@ void setup()
 	contadorHora = millis();
 	contadorMensagem = millis();
 
-	digitalWrite(BUZZER_PIN, LOW);
-
 	delay(1000);
+
+	if (somethingWrong)
+	{
+		lcd.clear();
+		lcd.print("ERROR");
+		while (true);
+	}
 }
 
 void mostraHora()
@@ -108,7 +115,7 @@ void mostraHora()
 
 		DateTime tempo = rtc.now();
 
-		Serial.println(tempo.unixtime());
+		DEBUG(tempo.unixtime());
 
 		lcd.home();
 		if (tempo.hour() < 10){
@@ -253,6 +260,50 @@ void loop()
 
 			switch (pacote.tipo)
 			{
+			case CONSULTAR_EMPREGADOR:
+			{
+				char empregador[256];
+
+				bool resultado = Arquivos.consultarEmpregador(empregador);
+
+				if (!resultado)
+				{
+					pacote.enviarNulo(&cliente);
+					break;
+				}
+
+				strcpy((char*) pacote.buffer, empregador);
+				pacote.tamanho = strlen((char*) pacote.buffer);
+				pacote.tipo = EMPREGADOR_CONSULTADO;
+				pacote.enviar(&cliente);
+				break;
+			}
+			case CADASTRAR_EMPREGADOR:
+			{
+				bool resultado = Arquivos.incluirEmpregador((char*)pacote.buffer);
+
+				if (!resultado)
+				{
+					pacote.enviarNulo(&cliente);
+					break;
+				}
+
+				pacote.enviar(&cliente, EMPREGADOR_CADASTRADO);
+				break;
+			}
+			case ALTERAR_EMPREGADOR: 
+			{
+				bool resultado = Arquivos.alterarEmpregador((char*)pacote.buffer);
+
+				if (!resultado)
+				{
+					pacote.enviarNulo(&cliente);
+					break;
+				}
+
+				pacote.enviar(&cliente, EMPREGADOR_CADASTRADO);
+				break;
+			}
 			case LISTAR_PONTOS:
 			{
 				char fullpath[40] = "PONTO/";
@@ -426,7 +477,7 @@ void loop()
 			}
 			case CONSULTAR_COLABORADOR: {
 
-
+											//nao realizado para o prototipo
 				
 				break;
 			}
@@ -457,13 +508,13 @@ void loop()
 			}
 			case ALTERAR_COLABORADOR: {
 
-				
+				//nao realizado para o prototipo
 
 				break;
 			}
 			case EXCLUIR_COLABORADOR: {
 
-
+				//nao realizado para o prototipo
 
 				break;
 			}

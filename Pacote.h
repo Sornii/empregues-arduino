@@ -31,6 +31,12 @@ public:
 	// \cliente Cliente para enviar o pacote
 	void enviar(EthernetClient*);
 
+	// Envia o pacote como um aviso
+	//
+	// \cliente Cliente para enviar o pacote
+	// \byte Byte de aviso para ser enviado
+	void enviar(EthernetClient*, byte);
+
 	// Envia um pacote nulo como sinalização
 	// de envio de vários pacotes
 	//

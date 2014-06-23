@@ -88,9 +88,42 @@ public:
 		Getters and Setters
 	***************************************************/
 
-	// Retorna o ID registrado na memória do sistema
+	// Consulta o último ID usado para cadastrar um
+	// Colaborador
+	//
+	// \returns o ID
 	uint32_t getIdColaborador();
 	uint32_t getIdPonto();
+
+	/**************************************************
+		Empregador
+	***************************************************/
+	
+	// Grava as informações do empregador na memória
+	// do sistema
+	//
+	// \char* Parâmetro responsável pela cadeia de
+	// caracteres que representam a informação sobre
+	// o Empregador.
+	// o formato deve ser exclusivamente da seguinte
+	// forma:
+	//
+	// <TIPO IDENTIFICADOR>;<IDENTIFICADOR>;<NOME>;
+	// <CEI>;<ESTADO (SIGLA)>;<CIDADE>;<BAIRRO>;
+	// <LOGRADOURO>;<NUMERO>;<COMPLEMENTO>
+	//
+	// \returns True para quando a operacao concluir
+	// com sucesso e False para quando der algo errado
+	bool incluirEmpregador(char*);
+
+	// Lê as informações do Empregador que existe
+	// na memória
+	//
+	// \returns True para quando a operacao concluir
+	// com sucesso e False para quando der algo errado
+	bool consultarEmpregador(char*);
+
+	bool alterarEmpregador(char*);
 	
 	/**************************************************
 		Colaboradores

@@ -12,6 +12,7 @@ char idPontoFile [] = "PONTO/ID";
 char pastaCol [] = "COLAB/";
 char pastaRfid [] = "RFID/";
 char pastaPonto [] = "PONTO/";
+char empregador [] = "EMPDOR";
 
 #pragma region Private Methods
 
@@ -317,7 +318,41 @@ bool ArquivosClass::consultarColaborador(char* out, uint32_t thisid)
 }
 
 
+bool ArquivosClass::incluirEmpregador(char* empregadorStr)
+{
+	if (SD.exists(empregador))
+		return false;
 
+	File file = SD.open(empregador, FILE_WRITE);
+	file.print(empregadorStr);
+	file.close();
+}
+
+bool ArquivosClass::consultarEmpregador(char* out)
+{
+	if (!SD.exists(empregador))
+		return false;
+
+	char bufferEmpregador[BUFFER_SIZE];
+
+	getConteudo(empregador, bufferEmpregador);
+
+	strcpy(out, bufferEmpregador);
+
+	return true;
+}
+
+bool ArquivosClass::alterarEmpregador(char* empregadorStr)
+{
+	if (!SD.exists(empregador))
+		return false;
+
+	SD.remove(empregador);
+
+	File file = SD.open(empregador, FILE_WRITE);
+	file.print(empregadorStr);
+	file.close();
+}
 
 
 #pragma endregion

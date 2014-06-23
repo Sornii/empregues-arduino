@@ -5,6 +5,11 @@
 
 #define DEBUG Serial.println
 
+#define IPADDRESS				IPAddress(192,168,1,14)
+#define SUBNETMASK				IPAddress(255,255,0,0)
+#define DNSSERVER				IPAddress(192,168,1,10)
+#define GATEWAY					IPAddress(192,168,1,10)
+#define DIRECTCONNECTION		true
 
 #define SEM_APITO_POR_HOJE
 #define BUZZER_PIN				30
@@ -69,6 +74,8 @@
 #define CADASTRAR_EMPREGADOR	0x15
 #define CONSULTAR_EMPREGADOR	0x16
 #define ALTERAR_EMPREGADOR		0x17
+#define EMPREGADOR_CONSULTADO	0x18
+#define EMPREGADOR_CADASTRADO	0x19
 
 // Relógio
 #define ALTERAR_RELOGIO			0xA8
