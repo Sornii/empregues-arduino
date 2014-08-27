@@ -4,11 +4,14 @@
 #define _CONSTANTSCLASS_h
 
 #define DEBUG Serial.println
+// Se o define abaixo não estiver comentado
+// a classe de arquivos irá deletar todos os dados
+#define APAGARDADOS
 
-#define IPADDRESS				IPAddress(192,168,1,14)
-#define SUBNETMASK				IPAddress(255,255,0,0)
-#define DNSSERVER				IPAddress(192,168,1,10)
-#define GATEWAY					IPAddress(192,168,1,10)
+#define IPADDRESS				IPAddress(10,1,1,14)
+#define SUBNETMASK				IPAddress(255,255,255,0)
+#define DNSSERVER				IPAddress(10,1,1,254)
+#define GATEWAY					IPAddress(10,1,1,254)
 #define DIRECTCONNECTION		true
 
 #define SEM_APITO_POR_HOJE

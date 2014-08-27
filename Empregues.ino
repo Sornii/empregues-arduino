@@ -37,6 +37,7 @@ void buzz(uint16_t tempo)
 void setup()
 {
 	bool somethingWrong = false;
+	char* msg = "";
 
 	Serial.begin(9600);
 
@@ -53,7 +54,8 @@ void setup()
 	// Inicializa o cartao SD
 	if (!SD.begin(4))
 	{
-		DEBUG("SD nao iniciou");
+		msg = "SD nao iniciou";
+		DEBUG(msg);
 		somethingWrong = true;
 	}
 
@@ -70,7 +72,8 @@ void setup()
 	nfc.begin();
 	
 	if (!nfc.getFirmwareVersion()) {
-		DEBUG("PN532 nao iniciou");
+		msg = "PN532 nao iniciou";
+		DEBUG(msg);
 		somethingWrong = true;
 	}
 
@@ -97,6 +100,8 @@ void setup()
 	{
 		lcd.clear();
 		lcd.print("ERROR");
+		lcd.setCursor(0, 1);
+		lcd.print(msg);
 		while (true);
 	}
 }

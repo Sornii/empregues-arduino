@@ -176,13 +176,25 @@ void ArquivosClass::init(RTC_DS1307* rtc)
 {
 	_rtc = rtc;
 
+	
+
 	idColaborador = idPonto = 0;
 
-	SD.remove(idFile);
-	SD.remove(idPontoFile);
+#ifndef APAGARDADOS
+	getIdPontoFromFile();
+	getIdColaboradorFromFile();
+#else
 	
-	File file = SD.open("COLAB/");
+	File file;
 	File entry;
+
+	if (SD.exists(idFile))
+		SD.remove(idFile);
+	if (SD.exists(idPontoFile))
+		SD.remove(idPontoFile);
+
+	file = SD.open("COLAB/");
+	entry;
 
 	while (entry = file.openNextFile())
 	{
@@ -206,7 +218,10 @@ void ArquivosClass::init(RTC_DS1307* rtc)
 
 	file.close();
 
-	file = SD.open("PONTO/2014/4/");
+	if (SD.exists(empregador))
+		SD.remove(empregador);
+
+	file = SD.open("PONTO/2014/6/");
 
 	while (entry = file.openNextFile())
 	{
@@ -217,6 +232,9 @@ void ArquivosClass::init(RTC_DS1307* rtc)
 	}
 
 	file.close();
+#endif
+
+	
 }
 
 uint32_t ArquivosClass::getIdColaborador()
@@ -321,7 +339,7 @@ bool ArquivosClass::consultarColaborador(char* out, uint32_t thisid)
 bool ArquivosClass::incluirEmpregador(char* empregadorStr)
 {
 	if (SD.exists(empregador))
-		return false;
+		SD.remove(empregador);
 
 	File file = SD.open(empregador, FILE_WRITE);
 	file.print(empregadorStr);
@@ -354,9 +372,7 @@ bool ArquivosClass::alterarEmpregador(char* empregadorStr)
 	file.close();
 }
 
-
 #pragma endregion
 
 
 ArquivosClass Arquivos;
-
